@@ -2,73 +2,123 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Оплата прошла</title>
-<link rel="stylesheet" href="style.css"> <!-- подключи свой CSS с сайта -->
+<title>Оплата прошла успешно</title>
 <style>
-  body { font-family: sans-serif; padding: 20px; }
-  .success-message { text-align: center; margin-bottom: 20px; }
-  .order-id { font-weight: bold; }
-  .cart-summary { max-width: 600px; margin: auto; }
+  body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 10px; }
+  h1 { color: green; }
+  .order-section { margin-bottom: 30px; }
+  .order-section h2 { margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  .old-price { text-decoration: line-through; color: #888; margin-left: 5px; }
+  .totals { margin-top: 20px; }
+  .totals div { display: flex; justify-content: space-between; padding: 5px 0; }
 </style>
 </head>
 <body>
 
-<div class="success-message">
-  <h1>Оплата прошла успешно!</h1>
-  <p>Ваш номер заказа: <span class="order-id"></span></p>
-</div>
+<h1>Спасибо! Оплата прошла успешно.</h1>
+<p>Номер заказа: <span id="orderId"></span></p>
 
-<div class="cart-summary">
+<div class="order-section">
   <h2>Ваш заказ:</h2>
-  <div class="cart-items"></div>
-  <div class="totals">
-    <p>Сумма: <span class="subtotal-price"></span></p>
-    <p>Доставка: <span class="delivery-price"></span></p>
-    <p>Скидка: <span class="discount-price"></span></p>
-    <p>Итого: <span class="total-price"></span></p>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Товар</th>
+        <th>Цена</th>
+        <th>Кол-во</th>
+        <th>Итого</th>
+      </tr>
+    </thead>
+    <tbody id="orderItems"></tbody>
+  </table>
 </div>
 
-<script src="cart.js"></script> <!-- подключи скрипт с корзиной -->
-<script>
-  // ===== Получаем номер заказа из URL =====
-  const params = new URLSearchParams(window.location.search);
-  const sessionId = params.get('session_id');
-  document.querySelector('.order-id').textContent = sessionId || 'Не найден';
+<div class="order-section">
+  <h2>Информация о доставке:</h2>
+  <div>Имя: <span id="customerName"></span></div>
+  <div>Телефон: <span id="customerPhone"></span></div>
+  <div>Email: <span id="customerEmail"></span></div>
+  <div>Адрес: <span id="customerAddress"></span></div>
+  <div>Метод доставки: <span id="deliveryMethod"></span></div>
+  <div>Дата доставки: <span id="deliveryDate"></span></div>
+  <div>Время доставки: <span id="deliveryTime"></span></div>
+</div>
 
-  // ===== Загружаем корзину из localStorage =====
-  const cartData = JSON.parse(localStorage.getItem('cart') || '{}');
-  const cartItemsContainer = document.querySelector('.cart-items');
-  const subtotalEl = document.querySelector('.subtotal-price');
-  const deliveryEl = document.querySelector('.delivery-price');
-  const discountEl = document.querySelector('.discount-price');
-  const totalEl = document.querySelector('.total-price');
+<div class="order-section totals">
+  <div>Подытог: <span id="subtotalEl"></span></div>
+  <div>Доставка: <span id="deliveryEl"></span></div>
+  <div>Скидка: <span id="discountEl"></span></div>
+  <div><strong>Итого: <span id="totalEl"></span></strong></div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const session_id = params.get('session_id');
+if (!session_id) {
+  document.body.innerHTML = "<p>Невозможно получить данные заказа.</p>";
+} else {
+  document.getElementById('orderId').textContent = session_id;
+
+  // Загрузка корзины
+  const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+  const activePromo = JSON.parse(localStorage.getItem('activePromo') || 'null');
+  const tbody = document.getElementById('orderItems');
 
   let subtotal = 0;
-  for (const id in cartData) {
-    const item = cartData[id];
-    const line = document.createElement('div');
-    line.textContent = `${item.name} × ${item.qty} = ${(item.unitPrice * item.qty).toFixed(2)} €`;
-    cartItemsContainer.appendChild(line);
-    subtotal += item.unitPrice * item.qty;
+  Object.values(cart).forEach(item => {
+    const row = document.createElement('tr');
+
+    const total = item.unitPrice * item.qty;
+    subtotal += total;
+
+    row.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.unitPrice.toFixed(2)} €${item.originalPrice && item.originalPrice > item.unitPrice ? `<span class="old-price">${item.originalPrice.toFixed(2)} €</span>` : ''}</td>
+      <td>${item.qty}</td>
+      <td>${total.toFixed(2)} €</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  // Данные формы
+  const formData = JSON.parse(localStorage.getItem('checkoutForm') || '{}');
+  document.getElementById('customerName').textContent = formData.name || '';
+  document.getElementById('customerPhone').textContent = formData.phone || '';
+  document.getElementById('customerEmail').textContent = formData.email || '';
+  document.getElementById('customerAddress').textContent = formData.address || '';
+  document.getElementById('deliveryMethod').textContent = formData.method || '';
+  document.getElementById('deliveryDate').textContent = formData.date || '';
+  document.getElementById('deliveryTime').textContent = formData.time || '';
+
+  // Итоги
+  const FREE_DELIVERY_LIMIT = 50; // примеры
+  const DELIVERY_COST = 5;
+
+  let delivery = subtotal >= FREE_DELIVERY_LIMIT ? 0 : DELIVERY_COST;
+  if (formData.method && formData.method.toLowerCase() === "самовывоз") delivery = 0;
+
+  let discount = 0;
+  if (activePromo) {
+    switch(activePromo.type){
+      case 'cart_discount': discount = (subtotal + delivery) * (activePromo.value / 100); break;
+      case 'flat_discount': discount = activePromo.value; break;
+      case 'min_total_discount': if(subtotal >= activePromo.min) discount = activePromo.value; break;
+      case 'free_delivery': delivery = 0; break;
+    }
   }
 
-  const delivery = parseFloat(localStorage.getItem('delivery')) || 0;
-  const discount = parseFloat(localStorage.getItem('discount')) || 0;
-  const total = subtotal + delivery - discount;
+  document.getElementById('subtotalEl').textContent = subtotal.toFixed(2) + " €";
+  document.getElementById('deliveryEl').textContent = delivery.toFixed(2) + " €";
+  document.getElementById('discountEl').textContent = discount > 0 ? "-" + discount.toFixed(2) + " €" : "0 €";
+  document.getElementById('totalEl').textContent = (subtotal + delivery - discount).toFixed(2) + " €";
 
-  subtotalEl.textContent = subtotal.toFixed(2) + ' €';
-  deliveryEl.textContent = delivery.toFixed(2) + ' €';
-  discountEl.textContent = discount.toFixed(2) + ' €';
-  totalEl.textContent = total.toFixed(2) + ' €';
-
-  // ===== Очистка корзины после успешного заказа =====
+  // Очистка данных
   localStorage.removeItem('cart');
-  localStorage.removeItem('delivery');
-  localStorage.removeItem('discount');
   localStorage.removeItem('activePromo');
+  localStorage.removeItem('checkoutForm');
+}
 </script>
-
 </body>
 </html>
