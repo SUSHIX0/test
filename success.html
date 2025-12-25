@@ -1,26 +1,19 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Оплата прошла успешно</title>
-<style>
-  body { font-family: sans-serif; max-width: 900px; margin: 20px auto; padding: 10px; }
-  h1 { color: green; }
-  .order-section { margin-bottom: 30px; }
-  .order-section h2 { margin-bottom: 10px; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  .old-price { text-decoration: line-through; color: #888; margin-left: 5px; }
-  .totals { margin-top: 20px; }
-  .totals div { display: flex; justify-content: space-between; padding: 5px 0; }
-</style>
+  <meta charset="UTF-8">
+  <title>Оплата прошла успешно</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 50px auto; }
+    h1 { color: green; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  </style>
 </head>
 <body>
+  <h1>Спасибо! Оплата прошла успешно.</h1>
+  <p>Номер заказа: <span id="orderId"></span></p>
 
-<h1>Спасибо! Оплата прошла успешно.</h1>
-<p>Номер заказа: <span id="orderId"></span></p>
-
-<div class="order-section">
   <h2>Ваш заказ:</h2>
   <table>
     <thead>
@@ -33,92 +26,36 @@
     </thead>
     <tbody id="orderItems"></tbody>
   </table>
-</div>
 
-<div class="order-section">
-  <h2>Информация о доставке:</h2>
-  <div>Имя: <span id="customerName"></span></div>
-  <div>Телефон: <span id="customerPhone"></span></div>
-  <div>Email: <span id="customerEmail"></span></div>
-  <div>Адрес: <span id="customerAddress"></span></div>
-  <div>Метод доставки: <span id="deliveryMethod"></span></div>
-  <div>Дата доставки: <span id="deliveryDate"></span></div>
-  <div>Время доставки: <span id="deliveryTime"></span></div>
-</div>
+  <script>
+    // Получаем ID сессии из query string
+    const params = new URLSearchParams(window.location.search);
+    const session_id = params.get('session_id');
 
-<div class="order-section totals">
-  <div>Подытог: <span id="subtotalEl"></span></div>
-  <div>Доставка: <span id="deliveryEl"></span></div>
-  <div>Скидка: <span id="discountEl"></span></div>
-  <div><strong>Итого: <span id="totalEl"></span></strong></div>
-</div>
+    if (!session_id) {
+      document.body.innerHTML = "<p>Невозможно получить данные заказа.</p>";
+    } else {
+      document.getElementById('orderId').textContent = session_id;
 
-<script>
-const params = new URLSearchParams(window.location.search);
-const session_id = params.get('session_id');
-if (!session_id) {
-  document.body.innerHTML = "<p>Невозможно получить данные заказа.</p>";
-} else {
-  document.getElementById('orderId').textContent = session_id;
+      // Берём корзину из localStorage
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      const tbody = document.getElementById('orderItems');
 
-  // Загрузка корзины
-  const cart = JSON.parse(localStorage.getItem('cart') || '{}');
-  const activePromo = JSON.parse(localStorage.getItem('activePromo') || 'null');
-  const tbody = document.getElementById('orderItems');
+      Object.values(cart).forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.unitPrice.toFixed(2)} €</td>
+          <td>${item.qty}</td>
+          <td>${(item.unitPrice * item.qty).toFixed(2)} €</td>
+        `;
+        tbody.appendChild(row);
+      });
 
-  let subtotal = 0;
-  Object.values(cart).forEach(item => {
-    const row = document.createElement('tr');
-
-    const total = item.unitPrice * item.qty;
-    subtotal += total;
-
-    row.innerHTML = `
-      <td>${item.name}</td>
-      <td>${item.unitPrice.toFixed(2)} €${item.originalPrice && item.originalPrice > item.unitPrice ? `<span class="old-price">${item.originalPrice.toFixed(2)} €</span>` : ''}</td>
-      <td>${item.qty}</td>
-      <td>${total.toFixed(2)} €</td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  // Данные формы
-  const formData = JSON.parse(localStorage.getItem('checkoutForm') || '{}');
-  document.getElementById('customerName').textContent = formData.name || '';
-  document.getElementById('customerPhone').textContent = formData.phone || '';
-  document.getElementById('customerEmail').textContent = formData.email || '';
-  document.getElementById('customerAddress').textContent = formData.address || '';
-  document.getElementById('deliveryMethod').textContent = formData.method || '';
-  document.getElementById('deliveryDate').textContent = formData.date || '';
-  document.getElementById('deliveryTime').textContent = formData.time || '';
-
-  // Итоги
-  const FREE_DELIVERY_LIMIT = 50; // примеры
-  const DELIVERY_COST = 5;
-
-  let delivery = subtotal >= FREE_DELIVERY_LIMIT ? 0 : DELIVERY_COST;
-  if (formData.method && formData.method.toLowerCase() === "самовывоз") delivery = 0;
-
-  let discount = 0;
-  if (activePromo) {
-    switch(activePromo.type){
-      case 'cart_discount': discount = (subtotal + delivery) * (activePromo.value / 100); break;
-      case 'flat_discount': discount = activePromo.value; break;
-      case 'min_total_discount': if(subtotal >= activePromo.min) discount = activePromo.value; break;
-      case 'free_delivery': delivery = 0; break;
+      // Очистим корзину после успешного платежа
+      localStorage.removeItem('cart');
+      localStorage.removeItem('activePromo');
     }
-  }
-
-  document.getElementById('subtotalEl').textContent = subtotal.toFixed(2) + " €";
-  document.getElementById('deliveryEl').textContent = delivery.toFixed(2) + " €";
-  document.getElementById('discountEl').textContent = discount > 0 ? "-" + discount.toFixed(2) + " €" : "0 €";
-  document.getElementById('totalEl').textContent = (subtotal + delivery - discount).toFixed(2) + " €";
-
-  // Очистка данных
-  localStorage.removeItem('cart');
-  localStorage.removeItem('activePromo');
-  localStorage.removeItem('checkoutForm');
-}
-</script>
+  </script>
 </body>
 </html>
