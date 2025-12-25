@@ -1,61 +1,74 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Оплата прошла успешно</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 50px auto; }
-    h1 { color: green; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оплата прошла</title>
+<link rel="stylesheet" href="style.css"> <!-- подключи свой CSS с сайта -->
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  .success-message { text-align: center; margin-bottom: 20px; }
+  .order-id { font-weight: bold; }
+  .cart-summary { max-width: 600px; margin: auto; }
+</style>
 </head>
 <body>
-  <h1>Спасибо! Оплата прошла успешно.</h1>
-  <p>Номер заказа: <span id="orderId"></span></p>
 
+<div class="success-message">
+  <h1>Оплата прошла успешно!</h1>
+  <p>Ваш номер заказа: <span class="order-id"></span></p>
+</div>
+
+<div class="cart-summary">
   <h2>Ваш заказ:</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Товар</th>
-        <th>Цена</th>
-        <th>Кол-во</th>
-        <th>Итого</th>
-      </tr>
-    </thead>
-    <tbody id="orderItems"></tbody>
-  </table>
+  <div class="cart-items"></div>
+  <div class="totals">
+    <p>Сумма: <span class="subtotal-price"></span></p>
+    <p>Доставка: <span class="delivery-price"></span></p>
+    <p>Скидка: <span class="discount-price"></span></p>
+    <p>Итого: <span class="total-price"></span></p>
+  </div>
+</div>
 
-  <script>
-    // Получаем ID сессии из query string
-    const params = new URLSearchParams(window.location.search);
-    const session_id = params.get('session_id');
+<script src="cart.js"></script> <!-- подключи скрипт с корзиной -->
+<script>
+  // ===== Получаем номер заказа из URL =====
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+  document.querySelector('.order-id').textContent = sessionId || 'Не найден';
 
-    if (!session_id) {
-      document.body.innerHTML = "<p>Невозможно получить данные заказа.</p>";
-    } else {
-      document.getElementById('orderId').textContent = session_id;
+  // ===== Загружаем корзину из localStorage =====
+  const cartData = JSON.parse(localStorage.getItem('cart') || '{}');
+  const cartItemsContainer = document.querySelector('.cart-items');
+  const subtotalEl = document.querySelector('.subtotal-price');
+  const deliveryEl = document.querySelector('.delivery-price');
+  const discountEl = document.querySelector('.discount-price');
+  const totalEl = document.querySelector('.total-price');
 
-      // Берём корзину из localStorage
-      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
-      const tbody = document.getElementById('orderItems');
+  let subtotal = 0;
+  for (const id in cartData) {
+    const item = cartData[id];
+    const line = document.createElement('div');
+    line.textContent = `${item.name} × ${item.qty} = ${(item.unitPrice * item.qty).toFixed(2)} €`;
+    cartItemsContainer.appendChild(line);
+    subtotal += item.unitPrice * item.qty;
+  }
 
-      Object.values(cart).forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>${item.unitPrice.toFixed(2)} €</td>
-          <td>${item.qty}</td>
-          <td>${(item.unitPrice * item.qty).toFixed(2)} €</td>
-        `;
-        tbody.appendChild(row);
-      });
+  const delivery = parseFloat(localStorage.getItem('delivery')) || 0;
+  const discount = parseFloat(localStorage.getItem('discount')) || 0;
+  const total = subtotal + delivery - discount;
 
-      // Очистим корзину после успешного платежа
-      localStorage.removeItem('cart');
-      localStorage.removeItem('activePromo');
-    }
-  </script>
+  subtotalEl.textContent = subtotal.toFixed(2) + ' €';
+  deliveryEl.textContent = delivery.toFixed(2) + ' €';
+  discountEl.textContent = discount.toFixed(2) + ' €';
+  totalEl.textContent = total.toFixed(2) + ' €';
+
+  // ===== Очистка корзины после успешного заказа =====
+  localStorage.removeItem('cart');
+  localStorage.removeItem('delivery');
+  localStorage.removeItem('discount');
+  localStorage.removeItem('activePromo');
+</script>
+
 </body>
 </html>
