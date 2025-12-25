@@ -2,152 +2,60 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Заказ оформлен</title>
-
-  <!-- Подключи свои стили сайта -->
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="cart.css">
-
+  <title>Оплата прошла успешно</title>
   <style>
-    /* Фолбэк, если вдруг стили не загрузились */
-    .success-wrap {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-    .success-title {
-      color: #2e7d32;
-      margin-bottom: 20px;
-    }
-    .order-box {
-      background: #fafafa;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 30px;
-    }
-    .order-info p {
-      margin: 6px 0;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-      text-align: left;
-    }
-    .total-row {
-      font-weight: bold;
-      font-size: 18px;
-    }
+    body { font-family: sans-serif; max-width: 600px; margin: 50px auto; }
+    h1 { color: green; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
   </style>
 </head>
-
 <body>
+  <h1>Спасибо! Оплата прошла успешно.</h1>
+  <p>Номер заказа: <span id="orderId"></span></p>
 
-<div class="success-wrap">
+  <h2>Ваш заказ:</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Товар</th>
+        <th>Цена</th>
+        <th>Кол-во</th>
+        <th>Итого</th>
+      </tr>
+    </thead>
+    <tbody id="orderItems"></tbody>
+  </table>
 
-  <h1 class="success-title">✅ Оплата прошла успешно</h1>
+  <script>
+    // Получаем ID сессии из query string
+    const params = new URLSearchParams(window.location.search);
+    const session_id = params.get('session_id');
 
-  <div class="order-box order-info">
-    <p><strong>Номер заказа:</strong> <span id="orderId"></span></p>
-    <p><strong>Имя:</strong> <span id="customerName"></span></p>
-    <p><strong>Телефон:</strong> <span id="customerPhone"></span></p>
-    <p><strong>Способ получения:</strong> <span id="customerMethod"></span></p>
-    <p><strong>Адрес:</strong> <span id="customerAddress"></span></p>
-    <p><strong>Дата и время:</strong> <span id="customerDate"></span></p>
-  </div>
+    if (!session_id) {
+      document.body.innerHTML = "<p>Невозможно получить данные заказа.</p>";
+    } else {
+      document.getElementById('orderId').textContent = session_id;
 
-  <div class="order-box">
-    <h2>Ваш заказ</h2>
+      // Берём корзину из localStorage
+      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
+      const tbody = document.getElementById('orderItems');
 
-    <table>
-      <thead>
-        <tr>
-          <th>Товар</th>
-          <th>Цена</th>
-          <th>Кол-во</th>
-          <th>Итого</th>
-        </tr>
-      </thead>
-      <tbody id="orderItems"></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="3">Доставка</td>
-          <td id="deliveryPrice">0.00 €</td>
-        </tr>
-        <tr>
-          <td colspan="3">Скидка</td>
-          <td id="discountPrice">0.00 €</td>
-        </tr>
-        <tr class="total-row">
-          <td colspan="3">Итого</td>
-          <td id="orderTotal">0.00 €</td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
+      Object.values(cart).forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.unitPrice.toFixed(2)} €</td>
+          <td>${item.qty}</td>
+          <td>${(item.unitPrice * item.qty).toFixed(2)} €</td>
+        `;
+        tbody.appendChild(row);
+      });
 
-</div>
-
-<script>
-  const order = JSON.parse(localStorage.getItem('lastOrder'));
-
-  if (!order) {
-    document.body.innerHTML = "<p>Заказ не найден</p>";
-    throw new Error("Order not found");
-  }
-
-  // ===== Номер заказа =====
-  document.getElementById('orderId').textContent =
-    "ORD-" + order.createdAt;
-
-  // ===== Данные клиента =====
-  document.getElementById('customerName').textContent = order.customer.name || "-";
-  document.getElementById('customerPhone').textContent = order.customer.phone || "-";
-  document.getElementById('customerMethod').textContent = order.customer.method || "-";
-  document.getElementById('customerAddress').textContent = order.customer.address || "-";
-  document.getElementById('customerDate').textContent =
-    `${order.customer.date || ""} ${order.customer.time || ""}`;
-
-  // ===== Товары =====
-  const tbody = document.getElementById('orderItems');
-  let total = 0;
-
-  order.cart.forEach(item => {
-    const sum = item.unitPrice * item.qty;
-    total += sum;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${item.name}${item.unitPrice === 0 ? ' 🎁' : ''}</td>
-      <td>${item.unitPrice.toFixed(2)} €</td>
-      <td>${item.qty}</td>
-      <td>${sum.toFixed(2)} €</td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // ===== Доставка =====
-  document.getElementById('deliveryPrice').textContent =
-    (order.delivery || 0).toFixed(2) + " €";
-  total += order.delivery || 0;
-
-  // ===== Скидка =====
-  document.getElementById('discountPrice').textContent =
-    "-" + (order.discount || 0).toFixed(2) + " €";
-  total -= order.discount || 0;
-
-  // ===== Итого =====
-  document.getElementById('orderTotal').textContent =
-    total.toFixed(2) + " €";
-
-  // ===== Очистка =====
-  localStorage.removeItem('cart');
-  localStorage.removeItem('activePromo');
-  localStorage.removeItem('lastOrder');
-</script>
-
+      // Очистим корзину после успешного платежа
+      localStorage.removeItem('cart');
+      localStorage.removeItem('activePromo');
+    }
+  </script>
 </body>
 </html>
