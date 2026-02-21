@@ -71,15 +71,6 @@ p { color: var(--muted); margin-bottom:30px; line-height:1.5; }
   transition: 0.2s ease;
 }
 
-.btn-primary {
-  background: var(--accent);
-  color: white;
-}
-.btn-primary:hover {
-  background: #ff4444;
-  transform: translateY(-2px);
-}
-
 .btn-secondary {
   background: rgba(255,45,45,0.08);
   color: var(--accent);
@@ -137,7 +128,6 @@ const translations = {
 // Меняем тексты на странице
 document.getElementById('cancelTitle').textContent = translations[lang].title;
 document.getElementById('cancelMessage').textContent = translations[lang].message;
-document.getElementById('retryBtn').textContent = translations[lang].retry;
 document.getElementById('goHomeBtn').textContent = translations[lang].home;
 
 // Ссылки на меню по языку
@@ -147,11 +137,8 @@ const menuUrls = {
   et: "https://sushix0.github.io/SUSHI-X"
 };
 
-// Кнопки
+// Кнопка
 document.getElementById('goHomeBtn').addEventListener('click', () => {
-  window.location.href = menuUrls[lang] || menuUrls['ru'];
-});
-document.getElementById('retryBtn').addEventListener('click', () => {
   window.location.href = menuUrls[lang] || menuUrls['ru'];
 });
 </script>
