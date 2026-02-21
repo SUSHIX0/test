@@ -103,10 +103,9 @@ p { color: var(--muted); margin-bottom:30px; line-height:1.5; }
 <div class="cancel-container">
   <div class="cancel-icon">✕</div>
   <h1 id="cancelTitle">Оплата отменена</h1>
-  <p id="cancelMessage">Вы отменили оплату заказа. Если это произошло случайно, вы можете попробовать снова.</p>
+  <p id="cancelMessage">Вы отменили оплату заказа.</p>
 
   <div class="button-group">
-    <button class="btn btn-primary" id="retryBtn">Попробовать снова</button>
     <button class="btn btn-secondary" id="goHomeBtn">Вернуться в меню</button>
   </div>
 </div>
@@ -120,20 +119,17 @@ const lang = urlParams.get('lang') || 'ru';
 const translations = {
   ru: {
     title: "Оплата отменена",
-    message: "Вы отменили оплату заказа. Если это произошло случайно, вы можете попробовать снова.",
-    retry: "Попробовать снова",
+    message: "Вы отменили оплату заказа.",
     home: "Вернуться в меню"
   },
   en: {
     title: "Payment Cancelled",
-    message: "You cancelled your order payment. You can try again if it was a mistake.",
-    retry: "Try Again",
+    message: "You cancelled your order payment.",
     home: "Back to Menu"
   },
   et: {
     title: "Makse tühistatud",
-    message: "Olete tellimuse makse tühistanud. Kui see juhtus kogemata, saate uuesti proovida.",
-    retry: "Proovi uuesti",
+    message: "Olete tellimuse makse tühistanud.",
     home: "Tagasi menüüsse"
   }
 };
