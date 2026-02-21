@@ -1,61 +1,146 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Оплата прошла успешно</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 50px auto; }
-    h1 { color: green; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оплата успешна</title>
+
+<style>
+:root {
+  --bg: #0f0f10;
+  --card: #161616;
+  --accent: #2ecc71; /* зеленый для успеха */
+  --text: #ffffff;
+  --muted: #999;
+  --radius: 16px;
+}
+
+* { box-sizing: border-box; margin:0; padding:0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.success-container {
+  background: var(--card);
+  padding: 40px 30px;
+  border-radius: var(--radius);
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  animation: fadeIn 0.5s ease;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: rgba(46,204,113,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: var(--accent);
+}
+
+h1 { margin-bottom:10px; font-size:1.6rem; }
+p { color: var(--muted); margin-bottom:30px; line-height:1.5; }
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn {
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s ease;
+}
+
+.btn-secondary {
+  background: rgba(46,204,113,0.08);
+  color: var(--accent);
+}
+.btn-secondary:hover {
+  background: rgba(46,204,113,0.15);
+}
+
+@media (max-width: 480px) {
+  .success-container { padding: 30px 20px; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
 </head>
+
 <body>
-  <h1>Спасибо! Оплата прошла успешно.</h1>
-  <p>Номер заказа: <span id="orderId"></span></p>
+<div class="success-container">
+  <div class="success-icon">✔</div>
+  <h1 id="successTitle">Оплата успешна</h1>
+  <p id="successMessage">Спасибо! Ваш заказ успешно оплачен.</p>
 
-  <h2>Ваш заказ:</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Товар</th>
-        <th>Цена</th>
-        <th>Кол-во</th>
-        <th>Итого</th>
-      </tr>
-    </thead>
-    <tbody id="orderItems"></tbody>
-  </table>
+  <div class="button-group">
+    <button class="btn btn-secondary" id="goHomeBtn">Вернуться в меню</button>
+  </div>
+</div>
 
-  <script>
-    // Получаем ID сессии из query string
-    const params = new URLSearchParams(window.location.search);
-    const session_id = params.get('session_id');
+<script>
+// Читаем язык из URL
+const urlParams = new URLSearchParams(window.location.search);
+const lang = urlParams.get('lang') || 'ru';
 
-    if (!session_id) {
-      document.body.innerHTML = "<p>Невозможно получить данные заказа.</p>";
-    } else {
-      document.getElementById('orderId').textContent = session_id;
+// Тексты на разных языках
+const translations = {
+  ru: {
+    title: "Оплата успешна",
+    message: "Спасибо! Ваш заказ успешно оплачен.",
+    home: "Вернуться в меню"
+  },
+  en: {
+    title: "Payment Successful",
+    message: "Thank you! Your order has been successfully paid.",
+    home: "Back to Menu"
+  },
+  et: {
+    title: "Makse edukalt sooritatud",
+    message: "Aitäh! Teie tellimus on edukalt tasutud.",
+    home: "Tagasi menüüsse"
+  }
+};
 
-      // Берём корзину из localStorage
-      const cart = JSON.parse(localStorage.getItem('cart') || '{}');
-      const tbody = document.getElementById('orderItems');
+// Меняем тексты на странице
+document.getElementById('successTitle').textContent = translations[lang].title;
+document.getElementById('successMessage').textContent = translations[lang].message;
+document.getElementById('goHomeBtn').textContent = translations[lang].home;
 
-      Object.values(cart).forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>${item.unitPrice.toFixed(2)} €</td>
-          <td>${item.qty}</td>
-          <td>${(item.unitPrice * item.qty).toFixed(2)} €</td>
-        `;
-        tbody.appendChild(row);
-      });
+// Ссылки на меню по языку
+const menuUrls = {
+  ru: "https://sushix0.github.io/SUSHI-X/ru",
+  en: "https://sushix0.github.io/SUSHI-X/en",
+  et: "https://sushix0.github.io/SUSHI-X"
+};
 
-      // Очистим корзину после успешного платежаc
-      localStorage.removeItem('cart');
-      localStorage.removeItem('activePromo');
-    }
-  </script>
+// Кнопка
+document.getElementById('goHomeBtn').addEventListener('click', () => {
+  window.location.href = menuUrls[lang] || menuUrls['ru'];
+});
+</script>
 </body>
 </html>
