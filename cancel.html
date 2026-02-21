@@ -15,12 +15,9 @@
   --radius: 16px;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; margin:0; padding:0; }
 
 body {
-  margin: 0;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -31,7 +28,6 @@ body {
   padding: 20px;
 }
 
-/* контейнер */
 .cancel-container {
   background: var(--card);
   padding: 40px 30px;
@@ -43,7 +39,6 @@ body {
   animation: fadeIn 0.5s ease;
 }
 
-/* иконка */
 .cancel-icon {
   width: 80px;
   height: 80px;
@@ -57,19 +52,9 @@ body {
   color: var(--accent);
 }
 
-/* заголовок */
-h1 {
-  margin: 0 0 10px;
-  font-size: 1.6rem;
-}
+h1 { margin-bottom:10px; font-size:1.6rem; }
+p { color: var(--muted); margin-bottom:30px; line-height:1.5; }
 
-p {
-  color: var(--muted);
-  margin-bottom: 30px;
-  line-height: 1.5;
-}
-
-/* кнопки */
 .button-group {
   display: flex;
   flex-direction: column;
@@ -86,35 +71,27 @@ p {
   transition: 0.2s ease;
 }
 
-/* основная */
 .btn-primary {
   background: var(--accent);
   color: white;
 }
-
 .btn-primary:hover {
   background: #ff4444;
   transform: translateY(-2px);
 }
 
-/* вторичная */
 .btn-secondary {
   background: rgba(255,45,45,0.08);
   color: var(--accent);
 }
-
 .btn-secondary:hover {
   background: rgba(255,45,45,0.15);
 }
 
-/* адаптив */
 @media (max-width: 480px) {
-  .cancel-container {
-    padding: 30px 20px;
-  }
+  .cancel-container { padding: 30px 20px; }
 }
 
-/* анимация */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
@@ -123,28 +100,64 @@ p {
 </head>
 
 <body>
-
 <div class="cancel-container">
   <div class="cancel-icon">✕</div>
-  <h1>Оплата отменена</h1>
-  <p>
-    Вы отменили оплату заказа.  
-    Если это произошло случайно, вы можете попробовать снова.
-  </p>
+  <h1 id="cancelTitle">Оплата отменена</h1>
+  <p id="cancelMessage">Вы отменили оплату заказа. Если это произошло случайно, вы можете попробовать снова.</p>
 
   <div class="button-group">
-    <button class="btn btn-secondary" onclick="goHome()">
-      Вернуться в меню
-    </button>
+    <button class="btn btn-primary" id="retryBtn">Попробовать снова</button>
+    <button class="btn btn-secondary" id="goHomeBtn">Вернуться в меню</button>
   </div>
 </div>
 
 <script>
+// Читаем язык из URL
+const urlParams = new URLSearchParams(window.location.search);
+const lang = urlParams.get('lang') || 'ru';
 
-function goHome() {
-  window.location.href = "https://sushix0.github.io/SUSHI-X";
-}
+// Тексты на разных языках
+const translations = {
+  ru: {
+    title: "Оплата отменена",
+    message: "Вы отменили оплату заказа. Если это произошло случайно, вы можете попробовать снова.",
+    retry: "Попробовать снова",
+    home: "Вернуться в меню"
+  },
+  en: {
+    title: "Payment Cancelled",
+    message: "You cancelled your order payment. You can try again if it was a mistake.",
+    retry: "Try Again",
+    home: "Back to Menu"
+  },
+  et: {
+    title: "Makse tühistatud",
+    message: "Olete tellimuse makse tühistanud. Kui see juhtus kogemata, saate uuesti proovida.",
+    retry: "Proovi uuesti",
+    home: "Tagasi menüüsse"
+  }
+};
+
+// Меняем тексты на странице
+document.getElementById('cancelTitle').textContent = translations[lang].title;
+document.getElementById('cancelMessage').textContent = translations[lang].message;
+document.getElementById('retryBtn').textContent = translations[lang].retry;
+document.getElementById('goHomeBtn').textContent = translations[lang].home;
+
+// Ссылки на меню по языку
+const menuUrls = {
+  ru: "https://sushix0.github.io/SUSHI-X/ru",
+  en: "https://sushix0.github.io/SUSHI-X/en",
+  et: "https://sushix0.github.io/SUSHI-X"
+};
+
+// Кнопки
+document.getElementById('goHomeBtn').addEventListener('click', () => {
+  window.location.href = menuUrls[lang] || menuUrls['ru'];
+});
+document.getElementById('retryBtn').addEventListener('click', () => {
+  window.location.href = menuUrls[lang] || menuUrls['ru'];
+});
 </script>
-
 </body>
 </html>
